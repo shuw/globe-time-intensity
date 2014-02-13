@@ -220,6 +220,9 @@ DAT.Globe = function(container, colorFn) {
 
   function createPoints() {
     if (this._baseGeometry !== undefined) {
+      if (this.points) {
+        scene.remove(this.points)
+      }
       if (this.is_animated === false) {
         this.points = new THREE.Mesh(this._baseGeometry, new THREE.MeshBasicMaterial({
               color: 0xffffff,
@@ -258,6 +261,8 @@ DAT.Globe = function(container, colorFn) {
     point.lookAt(mesh.position);
 
     point.scale.z = Math.max( size, 0.1 ); // avoid non-invertible matrix
+    point.scale.x = 2
+    point.scale.y = 2
     point.updateMatrix();
 
     for (var i = 0; i < point.geometry.faces.length; i++) {
@@ -355,6 +360,7 @@ DAT.Globe = function(container, colorFn) {
     rotation.x += (target.x - rotation.x) * 0.1;
     rotation.y += (target.y - rotation.y) * 0.1;
     distance += (distanceTarget - distance) * 0.3;
+    distance += 50;
 
     camera.position.x = distance * Math.sin(rotation.x) * Math.cos(rotation.y);
     camera.position.y = distance * Math.sin(rotation.y);
@@ -401,6 +407,10 @@ DAT.Globe = function(container, colorFn) {
   this.createPoints = createPoints;
   this.renderer = renderer;
   this.scene = scene;
+  this.setTarget = function (x, y) {
+    target.x = x;
+    target.y = y;
+  }
 
   return this;
 
