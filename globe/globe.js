@@ -154,7 +154,7 @@ DAT.Globe = function(container, colorFn) {
 
     document.addEventListener('keydown', onDocumentKeyDown, false);
 
-    window.addEventListener('resize', onWindowResize, false);
+    // window.addEventListener('resize', onWindowResize, false);
 
     container.addEventListener('mouseover', function() {
       overRenderer = true;

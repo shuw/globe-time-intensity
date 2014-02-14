@@ -1,12 +1,13 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
-    <title>WebGL Globe</title>
+    <title>Time Series Visualization</title>
     <meta charset="utf-8">
     <style type="text/css">
       html {
         height: 100%;
       }
+
       body {
         margin: 0;
         padding: 0;
@@ -18,7 +19,6 @@
       }
 
       #info {
-
         font-size: 11px;
         position: absolute;
         bottom: 5px;
@@ -26,103 +26,44 @@
         border-radius: 3px;
         right: 10px;
         padding: 10px;
-
       }
 
-      #currentInfo {
+      #clock {
         width: 270px;
         position: absolute;
-        left: 555px;
-        top: 20px;
-
-        background-color: rgba(0,0,0,0.2);
-
-        padding: 10px;
-      }
-
-      a {
-        color: #aaa;
-        text-decoration: none;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-
-      .bull {
-        padding: 0 5px;
-        color: #555;
-      }
-
-      #title {
-        position: absolute;
-        top: 20px;
-        width: 270px;
-        left: 20px;
-        background-color: rgba(0,0,0,0.2);
-        border-radius: 3px;
-        font: 20px Georgia;
-        padding: 10px;
-      }
-
-      .year {
-        font: 16px Helvetica;
-        line-height: 26px;
-        height: 30px;
+        left: 480px;
         text-align: center;
-        float: left;
+        top: 20px;
+        padding: 10px;
+        font: 16px Helvetica;
         color: rgba(255, 255, 255, 0.8);
-
-        cursor: pointer;
-        -webkit-transition: all 0.1s ease-out;
       }
 
-      .year:hover, .year.active {
-        font-size: 23px;
-        color: #fff;
-      }
-
-      #ce span {
-        display: none;
-      }
-
-      #ce {
-        width: 107px;
-        height: 55px;
-        display: block;
-        position: absolute;
-        bottom: 15px;
-        left: 20px;
-        background: url(/globe/ce.png);
-      }
-
-      #container {
+      #globe {
         margin-left: 30px;
       }
-      #container, #container2 {
+
+      #globe, #globe2 {
         width: 600px;
         float: left;
         height: 700px;
       }
-
-
     </style>
   </head>
   <body>
-
-  <div id="container"></div>
-  <div id="container2"></div>
-
-  <div id="currentInfo">
-    <span id="clock" class="year"></span>
-  </div>
-
+  <div id="globe"></div>
+  <div id="globe2"></div>
+  <div id="clock"></div>
   <script type="text/javascript" src="/globe/third-party/Detector.js"></script>
   <script type="text/javascript" src="/globe/third-party/three.min.js"></script>
   <script type="text/javascript" src="/globe/third-party/Tween.js"></script>
   <script type="text/javascript" src="/globe/globe.js"></script>
-  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.5.1/moment.js"></script>
+  <script type="text/javascript" src="/globe/third-party/jquery-1.11.0.min.js"></script>
+  <script type="text/javascript" src="/globe/third-party/moment.js"></script>
   <script type="text/javascript">
+    var MOVING_AVG_WEIGHT = 0.5
+    var NORMALIZE_MAGNITUDE = 250
+    var LOOPBACK = false
 
     if(!Detector.webgl){
       Detector.addGetWebGLMessage();
@@ -131,84 +72,42 @@
       var globeStartY = Math.PI / 12;
       var globeStartX2 = 0 - Math.PI / 4;
       var globeStartY2 = Math.PI / 12;
-      var globe = new DAT.Globe($('#container')[0]);
+      var globe = new DAT.Globe($('#globe')[0]);
       globe.setTarget(globeStartX, globeStartY)
-      var globe2 = new DAT.Globe($('#container2')[0]);
+      var globe2 = new DAT.Globe($('#globe2')[0]);
       globe2.setTarget(globeStartX2, globeStartY2)
 
-      var MOVING_AVG_WEIGHT = 0.2
-      var SCALE = 10;
 
-      $.getJSON('/globe/data/points.json', function(data) {
-        var start_time = parseInt(data[0][0]);
+      $.getJSON('/globe/data/coalesced_locations.json', function(globe_data) {
+        var start_time = parseInt(globe_data[0][0]);
         var current_time = start_time;
         globe.animate();
         globe2.animate();
 
-        var globe_data = []
-        var moving_avg_points = {}
-        var points = {}
-        for (i = 0; i < data.length; i++) {
-          var row = data[i]
-          var time = parseInt(row[0])
-          var latitude = parseFloat(row[1])
-          var longitude = parseFloat(row[2])
-          var magnitude = parseInt(row[3])
-
-          if (time > current_time) {
-            current_time = time
-
-            // insert missing values
-            for (key in moving_avg_points) {
-              if (!points[key]) {
-                var value = moving_avg_points[key].slice()
-                value[2] = 0
-                points[key] = value;
-              }
+        for (i = 0; i < globe_data.length; i++) {
+          var row = globe_data[i][1]
+          for (j = 0; j < row.length; j++) {
+            if (j % 3 === 2) {
+              row[j] = row[j] / NORMALIZE_MAGNITUDE
             }
-
-            row_data = []
-            for (key in points) {
-              var value = points[key]
-              current_magnitude = (moving_avg_points[key] && moving_avg_points[key][2]) || 0
-              var new_magnitude = MOVING_AVG_WEIGHT * value[2] + (1 - MOVING_AVG_WEIGHT) * current_magnitude;
-              value[2] = new_magnitude
-              moving_avg_points[key] = value
-              if (new_magnitude > 0.05) {
-                row_data.push(value[0])
-                row_data.push(value[1])
-                row_data.push(
-                  value[2] / SCALE
-                )
-              }
-            }
-
-            globe_data.push([time, row_data])
-            points = {}
           }
-          if (!latitude) {
-            continue
-          }
-          
-          var key = longitude + ',' + latitude
-
-          points[key] = [latitude, longitude, magnitude]
-
         }
 
-        window.start_video = function() {
+        document.body.style.backgroundImage = 'none'; // remove loading
+        window.startAnimation = function() {
           var idx = 0
           setInterval(function() {
-            if (idx >= globe_data.length) {
+            if (idx >= globe_data.length) { 
+              if (!LOOPBACK) {
+                return;
+              }
               idx = 0;
             }
 
             var time = globe_data[idx][0]
-
             var rotationOffset = ((time - start_time) / (3600 * 24)) * Math.PI * 2
 
-
-            formatted_time = moment.unix(time ).format('M/D/YY h:mmA');
+            formatted_time = moment.unix(time ).format('M/D/YY dddd h:mmA');
             $('#clock').text(formatted_time + ' PST')
             globe.addData(globe_data[idx][1], {format: 'magnitude'});
             globe.setTarget(globeStartX + rotationOffset, globeStartY);
@@ -218,17 +117,12 @@
             globe2.setTarget(globeStartX2 + rotationOffset, globeStartY2);
             globe2.createPoints();
             idx += 1;
-          }, 1000)
+          }, 100)
         }
-
-
       });
 
-      document.body.style.backgroundImage = 'none'; // remove loading
     }
 
   </script>
-
   </body>
-
 </html>

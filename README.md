@@ -1,69 +1,27 @@
-The **WebGL Globe** is an open platform for geographic data visualization created by the Google Data Arts Team. We encourage you to copy the code, add your own data, and create your own globes.
+Run the following commands in the checkout directory
 
-Check out the examples at http://www.chromeexperiments.com/globe, and if you create a globe, please [share it with us](http://www.chromeexperiments.com/globe-submit). We post our favorite globes publicly.
+# Format data
+Put input data in: globe/data/locations.tsv
 
-![](http://4.bp.blogspot.com/-nB6XnTgb4AA/TcLQ4gRBtfI/AAAAAAAAH-U/vb2GuhPN6aM/globe.png)
+It should be in tab seperated table with the following columns: unixTime, latitude, longitude
+Additional columns will simply be ignored.
 
-----
-
-**The WebGL Globe** supports data in `JSON` format, a sample of which you can find [here](http://code.google.com/p/webgl-globe/source/browse/globe/population909500.json). `webgl-globe` makes heavy use of the [Three.js library](https://github.com/mrdoob/three.js/).
-
-# Data Format
-
-The following illustrates the `JSON` data format that the globe expects:
-
-```javascript
-var data = [
-    [
-    'seriesA', [ latitude, longitude, magnitude, latitude, longitude, magnitude, ... ]
-    ],
-    [
-    'seriesB', [ latitude, longitude, magnitude, latitude, longitude, magnitude, ... ]
-    ]
-];
+Prepare data by running
+```
+python globe/prepare_data.py \
+  --input=globe/data/locations.tsv \
+  --minimum_count_threshold=3 \
+  > globe/data/coalesced_locations.json
 ```
 
-# Basic Usage
-
-The following code polls a `JSON` file (formatted like the one above) for geo-data and adds it to an animated, interactive WebGL globe.
-
-```javascript
-// Where to put the globe?
-var container = document.getElementById( 'container' );
-
-// Make the globe
-var globe = new DAT.Globe( container );
-
-// We're going to ask a file for the JSON data.
-var xhr = new XMLHttpRequest();
-
-// Where do we get the data?
-xhr.open( 'GET', 'myjson.json', true );
-
-// What do we do when we have it?
-xhr.onreadystatechange = function() {
-
-    // If we've received the data
-    if ( xhr.readyState === 4 && xhr.status === 200 ) {
-
-        // Parse the JSON
-        var data = JSON.parse( xhr.responseText );
-
-        // Tell the globe about your JSON data
-        for ( var i = 0; i < data.length; i ++ ) {
-            globe.addData( data[i][1], 'magnitude', data[i][0] );
-        }
-
-        // Create the geometry
-        globe.createPoints();
-
-        // Begin animation
-        globe.animate();
-
-    }
-
-};
-
-// Begin request
-xhr.send( null );
+# Visualization
+Start HTTP Server in 8001
 ```
+python -m SimpleHTTPServer 8001
+```
+
+In browser, visit http://localhost:8001/globe/
+
+Note: If you want to make the magnitudes of the projects, lower NORMALIZE_MAGNITUDE in globe/index.html
+
+
