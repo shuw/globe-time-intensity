@@ -18,16 +18,6 @@
         height: 100%;
       }
 
-      #info {
-        font-size: 11px;
-        position: absolute;
-        bottom: 5px;
-        background-color: rgba(0,0,0,0.8);
-        border-radius: 3px;
-        right: 10px;
-        padding: 10px;
-      }
-
       #clock {
         width: 270px;
         position: absolute;
@@ -54,7 +44,6 @@
   <div id="globe"></div>
   <div id="globe2"></div>
   <div id="clock"></div>
-  <script type="text/javascript" src="/globe/third-party/Detector.js"></script>
   <script type="text/javascript" src="/globe/third-party/three.min.js"></script>
   <script type="text/javascript" src="/globe/third-party/Tween.js"></script>
   <script type="text/javascript" src="/globe/globe.js"></script>
@@ -67,66 +56,63 @@
     var LOOPBACK = false
     var START_ANIMATION_ON_LOAD = true
 
-    if(!Detector.webgl){
-      Detector.addGetWebGLMessage();
-    } else {
-      var globeStartX = Math.PI - Math.PI / 4;
-      var globeStartY = Math.PI / 12;
-      var globeStartX2 = 0 - Math.PI / 4;
-      var globeStartY2 = Math.PI / 12;
-      var globe = new DAT.Globe($('#globe')[0]);
-      globe.setTarget(globeStartX, globeStartY)
-      var globe2 = new DAT.Globe($('#globe2')[0]);
-      globe2.setTarget(globeStartX2, globeStartY2)
+    var globeStartX = Math.PI - Math.PI / 4;
+    var globeStartY = Math.PI / 12;
+    var globe = new DAT.Globe($('#globe')[0]);
+    globe.setTarget(globeStartX, globeStartY)
+
+    var globeStartX2 = 0 - Math.PI / 4;
+    var globeStartY2 = Math.PI / 12;
+    var globe2 = new DAT.Globe($('#globe2')[0]);
+    globe2.setTarget(globeStartX2, globeStartY2)
 
 
-      $.getJSON('/globe/data/coalesced_locations.json', function(globe_data) {
-        var start_time = parseInt(globe_data[0][0]);
-        var current_time = start_time;
-        globe.animate();
-        globe2.animate();
+    $.getJSON('/globe/data/coalesced_locations.json', function(globe_data) {
+      var start_time = parseInt(globe_data[0][0]);
+      var current_time = start_time;
+      globe.animate();
+      globe2.animate();
 
-        for (i = 0; i < globe_data.length; i++) {
-          var row = globe_data[i][1]
-          for (j = 0; j < row.length; j++) {
-            if (j % 3 === 2) {
-              row[j] = row[j] / NORMALIZE_MAGNITUDE
-            }
+      for (i = 0; i < globe_data.length; i++) {
+        var row = globe_data[i][1]
+        for (j = 0; j < row.length; j++) {
+          if (j % 3 === 2) {
+            row[j] = row[j] / NORMALIZE_MAGNITUDE
           }
         }
+      }
 
-        document.body.style.backgroundImage = 'none'; // remove loading
-        window.startAnimation = function() {
-          var idx = 0
-          setInterval(function() {
-            if (idx >= globe_data.length) { 
-              if (!LOOPBACK) {
-                return;
-              }
-              idx = 0;
+      document.body.style.backgroundImage = 'none'; // remove loading
+      window.startAnimation = function() {
+        var idx = 0
+        setInterval(function() {
+          if (idx >= globe_data.length) { 
+            if (!LOOPBACK) {
+              return;
             }
+            idx = 0;
+          }
 
-            var time = globe_data[idx][0]
-            var rotationOffset = ((time - start_time) / (3600 * 24)) * Math.PI * 2
+          var time = globe_data[idx][0]
+          var rotationOffset = ((time - start_time) / (3600 * 24)) * Math.PI * 2
 
-            formatted_time = moment.unix(time ).format('M/D/YY dddd h:mmA');
-            $('#clock').text(formatted_time + ' PST')
-            globe.addData(globe_data[idx][1], {format: 'magnitude'});
-            globe.setTarget(globeStartX + rotationOffset, globeStartY);
-            globe.createPoints();
+          formatted_time = moment.unix(time ).format('M/D/YY dddd h:mmA');
+          $('#clock').text(formatted_time + ' PST')
+          globe.addData(globe_data[idx][1], {format: 'magnitude'});
+          globe.setTarget(globeStartX + rotationOffset, globeStartY);
+          globe.createPoints();
 
-            globe2.addData(globe_data[idx][1], {format: 'magnitude'});
-            globe2.setTarget(globeStartX2 + rotationOffset, globeStartY2);
-            globe2.createPoints();
-            idx += 1;
-          }, 100)
-        }
+          globe2.addData(globe_data[idx][1], {format: 'magnitude'});
+          globe2.setTarget(globeStartX2 + rotationOffset, globeStartY2);
+          globe2.createPoints();
+          idx += 1;
+        }, 100)
+      }
 
-        if (START_ANIMATION_ON_LOAD) {
-          startAnimation();
-        }
-      });
-    }
+      if (START_ANIMATION_ON_LOAD) {
+        startAnimation();
+      }
+    });
 
   </script>
   </body>
