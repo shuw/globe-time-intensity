@@ -64,6 +64,7 @@
     var MOVING_AVG_WEIGHT = 0.5
     var NORMALIZE_MAGNITUDE = 250
     var LOOPBACK = false
+    var START_ANIMATION_ON_LOAD = true
 
     if(!Detector.webgl){
       Detector.addGetWebGLMessage();
@@ -119,8 +120,11 @@
             idx += 1;
           }, 100)
         }
-      });
 
+        if (START_ANIMATION_ON_LOAD) {
+          startAnimation();
+        }
+      });
     }
 
   </script>
