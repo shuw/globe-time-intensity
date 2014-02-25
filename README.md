@@ -4,7 +4,6 @@ Run the following commands in the checkout directory
 Put input data in: globe/data/locations.tsv
 
 It should be in tab seperated table with the following columns: unixTime, latitude, longitude.
-
 Additional columns will simply be ignored.
 
 Prepare data by running
