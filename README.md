@@ -24,4 +24,4 @@ In browser, visit http://localhost:8001/globe/
 
 Note: If you want to adjust the magnitudes of the projections, lower NORMALIZE_MAGNITUDE in globe/index.html
 
-
+Example: http://www.youtube.com/watch?v=Z9HnRedYaCg
